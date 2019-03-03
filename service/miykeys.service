@@ -1,0 +1,19 @@
+[Unit]
+Description=mitk-tty1-service
+#After=getty@tty1.service
+After=getty.target
+#Conflicts=getty@tty1.service
+
+[Service]
+Type=simple
+#Type=oneshot
+#ExecStart=/usr/bin/screen -S mitk-TTY1 /home/pi/logkeys/start-logkeys.sh
+RemainAfterExit=yes
+ExecStart=/home/pi/logkeys/start-logkeys.sh
+StandardInput=tty-force
+StandardOutput=inherit
+StandardError=inherit
+TTYPath=/dev/tty1
+
+[Install]
+WantedBy=multi-user.target
