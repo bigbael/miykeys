@@ -135,4 +135,4 @@ udevadm info -rq name  /sys/dev/char/$(cat $PATH_HID_MOUSE) > /tmp/device_hid_mo
 
 cd /root/logkeys/build/src
 #setleds -caps +caps
-/root/logkeys/build/src/logkeys -s -d /dev/input/$input_device -m /root/logkeys/keymaps/en_miykeys.map
+/root/miykeys/build/src/logkeys -s -d /dev/input/$input_device -m /root/miykeys/keymaps/en_miykeys.map
