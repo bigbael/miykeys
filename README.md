@@ -1,4 +1,4 @@
-Update install notes/scripts will be incoming shortly.
+Install notes/scripts will be incoming shortly.
 
 Forked from the below project.
 
