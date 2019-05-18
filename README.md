@@ -1,3 +1,7 @@
+Update install notes/scripts will be incoming shortly.
+
+Forked from the below project.
+
 logkeys - a GNU/Linux keylogger
 ===============================
 
